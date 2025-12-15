@@ -62,8 +62,8 @@ Noctune-AI-Powered_Music-Playlist-Generator/
 │   └── fma_features_processed.csv
 │── static/                   # CSS, JS, assets
 │── templates/                # HTML files
-│── requirements.txt
-│── README.md
+│── main.ipynb
+README.md
 ```
 
 ---
