@@ -1,0 +1,19 @@
+{
+  "trained_on": "fma_features_processed.csv",
+  "csv_sha256": "e492a1c4c8d84b045b7ae7c91f969714fe76747268da3bf40be7f1a266eabd47",
+  "rows": 7997,
+  "feature_count": 31,
+  "used_prior_schema": false,
+  "enable_variance_threshold": false,
+  "vt_threshold": null,
+  "enable_pca": false,
+  "pca_variance": null,
+  "sklearn_version": "1.5.1",
+  "artifacts": {
+    "scaler": "scaler.joblib",
+    "nn": "nn.joblib",
+    "feature_cols": "feature_cols.json",
+    "metadata_sample": "metadata_sample.csv"
+  },
+  "saved_at_utc": "2025-11-11T19:16:38.110847Z"
+}

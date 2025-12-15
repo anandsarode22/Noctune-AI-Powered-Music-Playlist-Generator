@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Playlist Generator - AI Powered</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #818cf8;
+            --secondary: #ec4899;
+            --success: #10b981;
+            --danger: #ef4444;
+            --dark: #0f172a;
+            --dark-light: #1e293b;
+            --dark-lighter: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.1);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.18);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--text);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(59, 130, 246, 0.3) 0%, transparent 50%);
+            animation: gradientShift 15s ease infinite;
+            z-index: -1;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        /* Floating particles */
+        .particle {
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0.3;
+            animation: float 20s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0); }
+            25% { transform: translateY(-100px) translateX(50px); }
+            50% { transform: translateY(-200px) translateX(-50px); }
+            75% { transform: translateY(-100px) translateX(100px); }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 30px rgba(167, 139, 250, 0.5);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            font-weight: 300;
+        }
+
+        /* Glass card */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid var(--glass-border);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 48px 0 rgba(31, 38, 135, 0.5);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        /* Upload area */
+        .upload-area {
+            border: 2px dashed var(--glass-border);
+            border-radius: 16px;
+            padding: 3rem;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.03);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .upload-area:hover::before {
+            left: 100%;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+            transform: scale(1.02);
+        }
+
+        .upload-area.drag-over {
+            border-color: var(--secondary);
+            background: rgba(236, 72, 153, 0.1);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .upload-text {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .upload-subtext {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* File input hidden */
+        #fileInput {
+            display: none;
+        }
+
+        /* File list */
+        .file-list {
+            margin-top: 2rem;
+        }
+
+        .file-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s ease;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .file-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(5px);
+        }
+
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .file-size {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Audio player */
+        audio {
+            width: 100%;
+            height: 40px;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        audio::-webkit-media-controls-panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            box-shadow: 0 4px 15px 0 rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px 0 rgba(99, 102, 241, 0.6);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), #dc2626);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px 0 rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        /* Loading spinner */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 1rem;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Playlist display */
+        .playlist-container {
+            display: none;
+        }
+
+        .playlist-container.active {
+            display: block;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .playlist-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 0.5rem;
+        }
+
+        .playlist-table thead th {
+            text-align: left;
+            padding: 1rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .playlist-table tbody tr {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            animation: fadeIn 0.5s ease backwards;
+        }
+
+        .playlist-table tbody tr:nth-child(1) { animation-delay: 0.1s; }
+        .playlist-table tbody tr:nth-child(2) { animation-delay: 0.2s; }
+        .playlist-table tbody tr:nth-child(3) { animation-delay: 0.3s; }
+        .playlist-table tbody tr:nth-child(4) { animation-delay: 0.4s; }
+        .playlist-table tbody tr:nth-child(5) { animation-delay: 0.5s; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .playlist-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(10px);
+        }
+
+        .playlist-table tbody td {
+            padding: 1.25rem 1rem;
+        }
+
+        .playlist-table tbody tr td:first-child {
+            border-top-left-radius: 12px;
+            border-bottom-left-radius: 12px;
+        }
+
+        .playlist-table tbody tr td:last-child {
+            border-top-right-radius: 12px;
+            border-bottom-right-radius: 12px;
+        }
+
+        .track-number {
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .track-name {
+            font-weight: 600;
+            font-size: 1.05rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .track-artist {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .external-links {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .link-btn {
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: white;
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .link-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .link-btn.youtube {
+            border-color: #ff0000;
+        }
+
+        .link-btn.youtube:hover {
+            background: rgba(255, 0, 0, 0.2);
+        }
+
+        .link-btn.spotify {
+            border-color: #1db954;
+        }
+
+        .link-btn.spotify:hover {
+            background: rgba(29, 185, 84, 0.2);
+        }
+
+        /* Stats badge */
+        .stats-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, var(--success), #059669);
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .glass-card {
+                padding: 1.5rem;
+            }
+
+            .upload-area {
+                padding: 2rem 1rem;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .playlist-table {
+                font-size: 0.9rem;
+            }
+
+            .playlist-table tbody td {
+                padding: 1rem 0.5rem;
+            }
+
+            .external-links {
+                flex-direction: column;
+            }
+        }
+
+        /* Success message */
+        .success-message {
+            background: linear-gradient(135deg, var(--success), #059669);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            display: none;
+            align-items: center;
+            gap: 1rem;
+            animation: slideInDown 0.5s ease;
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .success-message.active {
+            display: flex;
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating particles -->
+    <div class="particle" style="width: 100px; height: 100px; background: rgba(99, 102, 241, 0.3); top: 10%; left: 10%;"></div>
+    <div class="particle" style="width: 150px; height: 150px; background: rgba(236, 72, 153, 0.3); top: 60%; left: 80%; animation-delay: -5s;"></div>
+    <div class="particle" style="width: 80px; height: 80px; background: rgba(59, 130, 246, 0.3); top: 80%; left: 20%; animation-delay: -10s;"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>🎵 Music Playlist Generator</h1>
+            <p class="subtitle">Upload your favorite songs and let AI create the perfect playlist</p>
+        </header>
+
+        <!-- Upload Section -->
+        <div class="glass-card">
+            <div class="card-header">
+                <div class="card-icon">📁</div>
+                <h2 class="card-title">Upload Your Music</h2>
+            </div>
+
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">🎧</div>
+                <div class="upload-text">Drag & Drop your audio files here</div>
+                <div class="upload-subtext">or click to browse (MP3, WAV, FLAC, M4A, OGG)</div>
+                <input type="file" id="fileInput" multiple accept=".mp3,.wav,.flac,.m4a,.ogg">
+            </div>
+
+            <div class="file-list" id="fileList"></div>
+
+            <div class="btn-group">
+                <button class="btn btn-primary" id="generateBtn" disabled>
+                    <span>✨</span>
+                    <span>Generate Playlist</span>
+                </button>
+                <button class="btn btn-danger" id="clearBtn" style="display: none;">
+                    <span>🗑️</span>
+                    <span>Clear All</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>🎵 Analyzing your music and creating the perfect playlist...</p>
+        </div>
+
+        <!-- Playlist Display -->
+        <div class="playlist-container" id="playlistContainer">
+            <div class="glass-card">
+                <div class="success-message" id="successMessage">
+                    <span style="font-size: 1.5rem;">✅</span>
+                    <span>Playlist generated successfully!</span>
+                </div>
+
+                <div class="card-header">
+                    <div class="card-icon">🎵</div>
+                    <h2 class="card-title">Your Generated Playlist</h2>
+                </div>
+
+                <div class="stats-badge">
+                    <span>📊</span>
+                    <span id="playlistCount">0 tracks found</span>
+                </div>
+
+                <table class="playlist-table" id="playlistTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Track</th>
+                            <th>Album</th>
+                            <th>Duration</th>
+                            <th>Links</th>
+                        </tr>
+                    </thead>
+                    <tbody id="playlistBody">
+                    </tbody>
+                </table>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="downloadCsvBtn">
+                        <span>📥</span>
+                        <span>Download CSV</span>
+                    </button>
+                    <button class="btn btn-secondary" id="downloadJsonBtn">
+                        <span>📥</span>
+                        <span>Download JSON</span>
+                    </button>
+                    <button class="btn btn-secondary" id="newPlaylistBtn">
+                        <span>🔄</span>
+                        <span>Create New Playlist</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFiles = [];
+        let currentPlaylist = [];
+
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const generateBtn = document.getElementById('generateBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const loading = document.getElementById('loading');
+        const playlistContainer = document.getElementById('playlistContainer');
+        const successMessage = document.getElementById('successMessage');
+        const playlistBody = document.getElementById('playlistBody');
+        const playlistCount = document.getElementById('playlistCount');
+
+        // Upload area click
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('drag-over');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        function handleFiles(files) {
+            const validFiles = Array.from(files).filter(file => {
+                const ext = file.name.split('.').pop().toLowerCase();
+                return ['mp3', 'wav', 'flac', 'm4a', 'ogg'].includes(ext);
+            });
+
+            selectedFiles = [...selectedFiles, ...validFiles];
+            displayFiles();
+            generateBtn.disabled = selectedFiles.length === 0;
+            clearBtn.style.display = selectedFiles.length > 0 ? 'inline-flex' : 'none';
+        }
+
+        function displayFiles() {
+            fileList.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                
+                const fileURL = URL.createObjectURL(file);
+                
+                fileItem.innerHTML = `
+                    <div class="file-icon">🎵</div>
+                    <div class="file-info">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-size">${(file.size / (1024 * 1024)).toFixed(2)} MB</div>
+                    </div>
+                    <div class="file-actions">
+                        <audio controls>
+                            <source src="${fileURL}" type="${file.type}">
+                        </audio>
+                        <button class="btn btn-danger" onclick="removeFile(${index})" style="padding: 0.5rem 1rem;">
+                            <span>❌</span>
+                        </button>
+                    </div>
+                `;
+                
+                fileList.appendChild(fileItem);
+            });
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            displayFiles();
+            generateBtn.disabled = selectedFiles.length === 0;
+            clearBtn.style.display = selectedFiles.length > 0 ? 'inline-flex' : 'none';
+        }
+
+        // Clear all files
+        clearBtn.addEventListener('click', () => {
+            selectedFiles = [];
+            displayFiles();
+            generateBtn.disabled = true;
+            clearBtn.style.display = 'none';
+            fileInput.value = '';
+        });
+
+        // Generate playlist
+        generateBtn.addEventListener('click', async () => {
+            const formData = new FormData();
+            selectedFiles.forEach(file => {
+                formData.append('files[]', file);
+            });
+
+            loading.classList.add('active');
+            generateBtn.disabled = true;
+
+            try {
+                const response = await fetch('/generate-playlist', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentPlaylist = data.playlist;
+                    displayPlaylist(data.playlist);
+                    successMessage.classList.add('active');
+                    setTimeout(() => successMessage.classList.remove('active'), 5000);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error generating playlist: ' + error.message);
+            } finally {
+                loading.classList.remove('active');
+                generateBtn.disabled = false;
+            }
+        });
+
+        function displayPlaylist(playlist) {
+            playlistBody.innerHTML = '';
+            playlistCount.textContent = `${playlist.length} tracks found`;
+            
+            playlist.forEach((track, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><span class="track-number">${index + 1}</span></td>
+                    <td>
+                        <div class="track-name">${track.name}</div>
+                        <div class="track-artist">${track.artist}</div>
+                    </td>
+                    <td>${track.album || 'N/A'}</td>
+                    <td>${track.duration}</td>
+                    <td>
+                        <div class="external-links">
+                            ${track.youtube_link ? `<a href="${track.youtube_link}" target="_blank" class="link-btn youtube">▶️ YouTube</a>` : ''}
+                            ${track.spotify_link ? `<a href="${track.spotify_link}" target="_blank" class="link-btn spotify">🎵 Spotify</a>` : ''}
+                        </div>
+                    </td>
+                `;
+                playlistBody.appendChild(row);
+            });
+
+            playlistContainer.classList.add('active');
+            playlistContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Download CSV
+        document.getElementById('downloadCsvBtn').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/download-csv', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ playlist: currentPlaylist })
+                });
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'playlist.csv';
+                a.click();
+            } catch (error) {
+                alert('Error downloading CSV: ' + error.message);
+            }
+        });
+
+        // Download JSON
+        document.getElementById('downloadJsonBtn').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/download-json', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ playlist: currentPlaylist })
+                });
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'playlist.json';
+                a.click();
+            } catch (error) {
+                alert('Error downloading JSON: ' + error.message);
+            }
+        });
+
+        // New playlist
+        document.getElementById('newPlaylistBtn').addEventListener('click', () => {
+            playlistContainer.classList.remove('active');
+            selectedFiles = [];
+            currentPlaylist = [];
+            displayFiles();
+            generateBtn.disabled = true;
+            clearBtn.style.display = 'none';
+            fileInput.value = '';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    </script>
+</body>
+</html>
